@@ -7,12 +7,17 @@
     <script src="script.js"></script>
 </head>
 <body>
-    <div class="content">
-        <h3>Valor do Input</h3>
-        <input id="numero"/>
-        <button onclick="LerInput()">Ler</button>
-        <br>
-        <div id="texto"> - </div>
-    </div>
+<div class="content">
+    <div>Números</div>
+    <input type="number" id="numbersId"/>
+    <button onclick="adicionarNumero()">Adicionar</button>
+    <span>Adicionados:</span>
+    <span id="numerosAdicionados"></span>
+    <br>
+    <button onclick="calcularNumero()">Calcular</button>
+    <br>
+    <span>Maior Número:</span>
+    <span id="maiorNumero"></span>
+</div>
 </body>
 </html>
