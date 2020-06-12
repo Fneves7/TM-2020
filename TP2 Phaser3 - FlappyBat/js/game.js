@@ -1,7 +1,7 @@
 
 const configurations = {
     type: Phaser.AUTO,
-    width: 640,
+    width: 288,
     height: 512,
     parent: 'canvas',
     physics: {
@@ -21,10 +21,10 @@ const configurations = {
 }
 
 const assets = {
-    bird: {
-        red: 'bird-red',
-        yellow: 'bird-yellow',
-        blue: 'bird-blue'
+    bat: {
+        red: 'bat-red',
+        yellow: 'bat-yellow',
+        blue: 'bat-blue'
     },
     obstacle: {
         pipe: {
@@ -39,7 +39,7 @@ const assets = {
         }
     },
     scene: {
-        width: 300,
+        width: 144,
         background: {
             day: 'background-day',
             night: 'background-night'
@@ -64,7 +64,7 @@ const assets = {
         number9: 'number9'
     },
     animation: {
-        bird: {
+        bat: {
             red: {
                 clapWings: 'red-clap-wings',
                 stop: 'red-stop'
@@ -95,15 +95,16 @@ let restartButton
 let gameOverBanner
 let messageInitial
 
-// Bird
+// Bat
 let player
-let birdName
+let batName
 let framesMoveUp
 
 // Background
 let backgroundDay
 let backgroundNight
 let ground
+let groundDay
 
 // pipes
 let pipesGroup
@@ -116,12 +117,18 @@ let scoreboardGroup
 let score
 
 function preload() {
+    //Sounds
+	this.load.audio('begin', 'assets/audio/begin.mp3');
+    this.load.audio('game_over', 'assets/audio/game_over.wav');
+    this.load.audio('point', 'assets/audio/point.wav');
+    this.load.audio('flap', 'assets/audio/flap.mp3');
+
     // Backgrounds and ground
     this.load.image(assets.scene.background.day, 'assets/background-day.png')
     this.load.image(assets.scene.background.night, 'assets/background-night.png')
     this.load.spritesheet(assets.scene.ground, 'assets/ground-sprite.png', {
-        frameWidth: 640,
-        frameHeight: 50
+        frameWidth: 336,
+        frameHeight: 112
     })
 
     // Pipes
@@ -137,16 +144,16 @@ function preload() {
     this.load.image(assets.scene.gameOver, 'assets/gameover.png')
     this.load.image(assets.scene.restart, 'assets/restart-button.png')
 
-    // Birds
-    this.load.spritesheet(assets.bird.red, 'assets/bird-red-sprite.png', {
+    // bats
+    this.load.spritesheet(assets.bat.red, 'assets/bat-red-sprite.png', {
         frameWidth: 34,
         frameHeight: 24
     })
-    this.load.spritesheet(assets.bird.blue, 'assets/bird-blue-sprite.png', {
+    this.load.spritesheet(assets.bat.blue, 'assets/bat-blue-sprite.png', {
         frameWidth: 34,
         frameHeight: 24
     })
-    this.load.spritesheet(assets.bird.yellow, 'assets/bird-yellow-sprite.png', {
+    this.load.spritesheet(assets.bat.yellow, 'assets/bat-yellow-sprite.png', {
         frameWidth: 34,
         frameHeight: 24
     })
@@ -165,11 +172,18 @@ function preload() {
 }
 
 function create() {
+	//Sounds
+	this.begin = this.sound.add('begin');
+    this.game_over = this.sound.add('game_over');
+    this.point = this.sound.add('point');
+    this.flap = this.sound.add('flap');
+
+    //Background
     backgroundDay = this.add.image(assets.scene.width, 256, assets.scene.background.day).setInteractive()
-    backgroundDay.on('pointerdown', moveBird)
+    backgroundDay.on('pointerdown', movebat)
     backgroundNight = this.add.image(assets.scene.width, 256, assets.scene.background.night).setInteractive()
     backgroundNight.visible = false
-    backgroundNight.on('pointerdown', moveBird)
+    backgroundNight.on('pointerdown', movebat)
 
     gapsGroup = this.physics.add.group()
     pipesGroup = this.physics.add.group()
@@ -184,6 +198,7 @@ function create() {
     messageInitial.visible = false
 
     upButton = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
+
 
     // Ground animations
     this.anims.create({
@@ -204,10 +219,10 @@ function create() {
         frameRate: 20
     })
 
-    // Red Bird Animations
+    // Red bat Animations
     this.anims.create({
-        key: assets.animation.bird.red.clapWings,
-        frames: this.anims.generateFrameNumbers(assets.bird.red, {
+        key: assets.animation.bat.red.clapWings,
+        frames: this.anims.generateFrameNumbers(assets.bat.red, {
             start: 0,
             end: 2
         }),
@@ -215,18 +230,18 @@ function create() {
         repeat: -1
     })
     this.anims.create({
-        key: assets.animation.bird.red.stop,
+        key: assets.animation.bat.red.stop,
         frames: [{
-            key: assets.bird.red,
+            key: assets.bat.red,
             frame: 1
         }],
         frameRate: 20
     })
 
-    // Blue Bird animations
+    // Blue bat animations
     this.anims.create({
-        key: assets.animation.bird.blue.clapWings,
-        frames: this.anims.generateFrameNumbers(assets.bird.blue, {
+        key: assets.animation.bat.blue.clapWings,
+        frames: this.anims.generateFrameNumbers(assets.bat.blue, {
             start: 0,
             end: 2
         }),
@@ -234,18 +249,18 @@ function create() {
         repeat: -1
     })
     this.anims.create({
-        key: assets.animation.bird.blue.stop,
+        key: assets.animation.bat.blue.stop,
         frames: [{
-            key: assets.bird.blue,
+            key: assets.bat.blue,
             frame: 1
         }],
         frameRate: 20
     })
 
-    // Yellow Bird animations
+    // Yellow bat animations
     this.anims.create({
-        key: assets.animation.bird.yellow.clapWings,
-        frames: this.anims.generateFrameNumbers(assets.bird.yellow, {
+        key: assets.animation.bat.yellow.clapWings,
+        frames: this.anims.generateFrameNumbers(assets.bat.yellow, {
             start: 0,
             end: 2
         }),
@@ -253,9 +268,9 @@ function create() {
         repeat: -1
     })
     this.anims.create({
-        key: assets.animation.bird.yellow.stop,
+        key: assets.animation.bat.yellow.stop,
         frames: [{
-            key: assets.bird.yellow,
+            key: assets.bat.yellow,
             frame: 1
         }],
         frameRate: 20
@@ -275,13 +290,15 @@ function create() {
 }
 
 function update() {
+
     if (gameOver || !gameStarted)
         return
 
     if (framesMoveUp > 0)
         framesMoveUp--
     else if (Phaser.Input.Keyboard.JustDown(upButton))
-        moveBird()
+        movebat()
+        // this.flap.play();
     else {
         player.setVelocityY(120)
 
@@ -310,15 +327,17 @@ function update() {
     }
 }
 
-function hitBird(player) {
+function hitbat(player) {
 
     this.cameras.main.shake(300);
     this.physics.pause()
+    //play gameover sound
+    this.game_over.play();
 
     gameOver = true
     gameStarted = false
 
-    player.anims.play(getAnimationBird(birdName).stop)
+    player.anims.play(getAnimationbat(batName).stop)
     ground.anims.play(assets.animation.ground.stop)
 
     gameOverBanner.visible = true
@@ -329,9 +348,12 @@ function updateScore(_, gap) {
     score++
     gap.destroy()
 
+    //change background when reach 10 points
     if (score % 10 == 0) {
         backgroundDay.visible = !backgroundDay.visible
         backgroundNight.visible = !backgroundNight.visible
+        //backgroundNight.visible = !backgroundNight.visible
+        //groundDay.visible = !ground.visible
 
         if (currentPipe === assets.obstacle.pipe.green)
             currentPipe = assets.obstacle.pipe.red
@@ -339,6 +361,9 @@ function updateScore(_, gap) {
             currentPipe = assets.obstacle.pipe.green
     }
 
+    //play point sound
+    this.point.play();
+    //update score
     updateScoreboard()
 }
 
@@ -359,7 +384,7 @@ function makePipes(scene) {
     pipeBottom.body.allowGravity = false
 }
 
-function moveBird() {
+function movebat() {
     if (gameOver)
         return
 
@@ -371,27 +396,27 @@ function moveBird() {
     framesMoveUp = 5
 }
 
-function getRandomBird() {
+function getRandombat() {
     switch (Phaser.Math.Between(0, 2)) {
         case 0:
-            return assets.bird.red
+            return assets.bat.red
         case 1:
-            return assets.bird.blue
+            return assets.bat.blue
         case 2:
         default:
-            return assets.bird.yellow
+            return assets.bat.yellow
     }
 }
 
-function getAnimationBird(birdColor) {
-    switch (birdColor) {
-        case assets.bird.red:
-            return assets.animation.bird.red
-        case assets.bird.blue:
-            return assets.animation.bird.blue
-        case assets.bird.yellow:
+function getAnimationbat(batColor) {
+    switch (batColor) {
+        case assets.bat.red:
+            return assets.animation.bat.red
+        case assets.bat.blue:
+            return assets.animation.bat.blue
+        case assets.bat.yellow:
         default:
-            return assets.animation.bird.yellow
+            return assets.animation.bat.yellow
     }
 }
 
@@ -436,14 +461,14 @@ function prepareGame(scene) {
     backgroundNight.visible = false
     messageInitial.visible = true
 
-    birdName = getRandomBird()
-    player = scene.physics.add.sprite(60, 265, birdName)
+    batName = getRandombat()
+    player = scene.physics.add.sprite(60, 265, batName)
     player.setCollideWorldBounds(true)
-    player.anims.play(getAnimationBird(birdName).clapWings, true)
+    player.anims.play(getAnimationbat(batName).clapWings, true)
     player.body.allowGravity = false
 
-    scene.physics.add.collider(player, ground, hitBird, null, scene)
-    scene.physics.add.collider(player, pipesGroup, hitBird, null, scene)
+    scene.physics.add.collider(player, ground, hitbat, null, scene)
+    scene.physics.add.collider(player, pipesGroup, hitbat, null, scene)
 
     scene.physics.add.overlap(player, gapsGroup, updateScore, null, scene)
 
